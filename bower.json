@@ -1,0 +1,10 @@
+{
+  "name": "toaster.js",
+  "version": "0.0.1",
+  "main": "src/toaster.js",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "components"
+  ]
+}
