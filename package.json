@@ -1,0 +1,7 @@
+{
+  "name": "toaster.js",
+  "version": "0.0.1",
+  "devDependencies": {
+    "grunt-contrib-jasmine": "~0.4.2"
+  }
+}

@@ -2,9 +2,16 @@
   "name": "toaster.js",
   "version": "0.0.1",
   "main": "src/toaster.js",
+  "dependencies": {
+    "jquery": "2.0.0",
+    "eventable": "git@github.com:creativej/eventable.git"
+  },
   "ignore": [
     "**/.*",
     "node_modules",
     "components"
-  ]
+  ],
+  "devDependencies": {
+    "jasmine": "~1.3.1"
+  }
 }

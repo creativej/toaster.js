@@ -1,27 +1,68 @@
 ;(function($, window) {
 	'use strict';
 
+	var eventable = function(obj) {
+		var events = {};
+		obj = obj || {};
+
+		obj.on = function(name, fn) {
+			events[name] = events[name] || [];
+			events[name].push(fn);
+			return obj;
+		};
+
+		obj.off = function(name, fn) {
+			if(!(name in events)) { return; }
+			if (fn) {
+				events[name].splice(events[name].indexOf(fn), 1);
+			} else {
+				events[name] = [];
+			}
+			return obj;
+		};
+
+		obj.trigger = function(name) {
+			if(!(name in events)) { return; }
+
+			for(var i = 0; i < events[name].length; i++){
+				events[name][i].apply(this, Array.prototype.slice.call(arguments, 1));
+			}
+			return obj;
+		};
+
+		return obj;
+	};
+
 	var toaster = function(options) {
 		var
-			instance = {},
+			instance = eventable(),
 			shownQueue = [],
 			waitingQueue = []
 			;
 
 		options = $.extend({
 			hover: false,
-			maxToastShow: 5
+			maxToastShow: 5,
+			cls: 'toaster-group'
 		}, options);
 
 		if (!options.$el) {
 			options.$el = $('<div />');
-			options.$el.addClass('class', 'toaster-group');
+			options.$el.addClass(options.cls);
 			$('body').append(options.$el);
 		}
+
+		instance.options = options;
 
 		function showToast(toast) {
 			options.$el.prepend(toast.$el);
 			toast.init();
+
+			toast.on('hide', function() {
+				this.destroy();
+
+				instance.showNextToastInWaiting();
+			});
 
 			toast.on('mouseover', function() {
 				instance.stopToasts();
@@ -35,23 +76,26 @@
 		}
 
 		instance.stopToasts = function() {
-			$.each(shownQueue, function(toast) {
-				toast.stop();
+			$.each(shownQueue, function() {
+				this.stop();
 			});
 		};
 
 		instance.playToasts = function() {
-			$.each(shownQueue, function(toast) {
-				toast.play();
+			$.each(shownQueue, function() {
+				this.play();
 			});
 		};
 
-		instance.push = function(toast) {
-			toast.on('hide', function() {
-				this.destroy();
-				showToast(waitingQueue.shift());
-			});
+		instance.showNextToastInWaiting = function() {
+			var toast = waitingQueue.shift();
 
+			if (toast) {
+				showToast(toast);
+			}
+		};
+
+		instance.push = function(toast) {
 			if (shownQueue.length < options.maxToastShow) {
 				showToast(toast);
 			} else {
@@ -59,13 +103,28 @@
 			}
 		};
 
+		instance.shownQueueLength = function() {
+			return shownQueue.length;
+		};
+
+		instance.waitingQueueLength = function() {
+			return waitingQueue.length;
+		};
+
+		instance.hasToast = function(toast) {
+			return Boolean(options.$el.find(toast.$el).length);
+		};
+
+		instance.destroy = function() {
+			options.$el.remove();
+		};
+
 		return instance;
 	};
 
-	var toast = function($el, options) {
+	toaster.toast = function($el, options) {
 		var
-			instance = {},
-			$instance = $(instance),
+			instance = eventable(),
 			timer,
 			$closeBtn
 			;
@@ -73,16 +132,18 @@
 		options = $.extend({
 			duration: 3000,
 			effectDuration: 'fast',
-			closeBtn: 'close-button'
+			closeBtn: '.toaster-toast-close-button'
 		}, options);
 
+		instance.options = options;
+
 		instance.init = function() {
-			$closeBtn = $el.find('.'+options.closeBtn);
+			$closeBtn = $el.find(options.closeBtn);
 
 			/**
 			 * Bind events
 			 */
-			$closeBtn.click(function(e) {
+			$closeBtn.on('click', function(e) {
 				instance.hide();
 				return false;
 			});
@@ -104,37 +165,30 @@
 
 		instance.hide = function() {
 			$el.removeClass('show');
-			instance.trigger('hide');
+			this.trigger('hide');
 		};
 
 		instance.stop = function() {
 			if (timer) {
 				window.clearTimeout(timer);
 			}
+
+			return this;
 		};
 
 		instance.play = function() {
-			if (timer) {
-				window.clearTimeout(timer);
-			}
+			this.stop();
 
 			timer = window.setTimeout(function() {
 				instance.hide();
 			}, options.duration);
-		};
-
-		instance.destroy = function() {
-			$el.off();
-			$closeBtn.off();
-		};
-
-		instance.on = function(name, callback) {
-			$instance.on(name, callback);
 			return this;
 		};
 
-		instance.trigger = function(name) {
-			$instance.trigger(name);
+		instance.destroy = function() {
+			$closeBtn.off();
+			$el.off();
+			$el.remove();
 		};
 
 		instance.$el = $el;
@@ -142,22 +196,5 @@
 		return instance;
 	};
 
-	toast.makeFromNotification = function(notification) {
-		var
-			$toast = $('<div class="toast"><div class="toast-header"><a class="close-button" href="#"><span class="ui-icon ui-icon-close"></span></a></div></div>'),
-			message = $('<div class="toast-message" />')
-				.append(notification.message),
-			image = $('<img width="50" height="50" class="toast-image" />')
-				.attr('src', notification.image)
-			;
-
-		$toast
-			.data('id',notification.id)
-			.append(image)
-			.append(message)
-			;
-
-		return toast($toast);
-	};
-
-}(jQUery, window));
+	window.toaster = toaster;
+}(jQuery, window));
