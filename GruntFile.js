@@ -14,12 +14,18 @@ module.exports = function(grunt) {
           'components/jquery/jquery.js'
         ]
       }
+    },
+    uglify: {
+      my_target: {
+        files: {
+          'src/toaster.min.js': ['src/toaster.js']
+        }
+      }
     }
   });
 
+
   // Register tasks.
   grunt.loadNpmTasks('grunt-contrib-jasmine');
-
-  // Default task.
-  grunt.registerTask('default', 'jasmine');
+  grunt.loadNpmTasks('grunt-contrib-uglify');
 };
