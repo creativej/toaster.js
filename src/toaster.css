@@ -33,11 +33,16 @@
 	padding: 20px 10px 10px;
 	background-color: #fff;
 	opacity: 0;
+	filter: alpha(opacity=0);
 	top: 20px;
 }
 
 .toaster-toast-close-button {
 	position: absolute;
-	right: 5px;
+	right: 0px;
 	top: 0px;
+	display: block;
+	width: 16px;
+	height: 16px;
+	text-decoration: none;
 }
