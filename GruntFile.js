@@ -21,6 +21,15 @@ module.exports = function(grunt) {
           'src/toaster.min.js': ['src/toaster.js']
         }
       }
+    },
+    watch: {
+      scripts: {
+        files: ['src/toaster.js'],
+        tasks: ['uglify'],
+        options: {
+          nospawn: true
+        }
+      }
     }
   });
 
@@ -28,4 +37,5 @@ module.exports = function(grunt) {
   // Register tasks.
   grunt.loadNpmTasks('grunt-contrib-jasmine');
   grunt.loadNpmTasks('grunt-contrib-uglify');
+  grunt.loadNpmTasks('grunt-contrib-watch');
 };
