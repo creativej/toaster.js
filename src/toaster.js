@@ -1,5 +1,24 @@
-;(function($, window) {
+;(function($, window, document) {
 	'use strict';
+
+	/**
+	 * Polyfill indexOf
+	 */
+	if (!Array.prototype.indexOf) {
+		Array.prototype.indexOf = function (obj, fromIndex) {
+			if (fromIndex == null) {
+				fromIndex = 0;
+			} else if (fromIndex < 0) {
+				fromIndex = Math.max(0, this.length + fromIndex);
+			}
+			for (var i = fromIndex, j = this.length; i < j; i++) {
+				if (this[i] === obj) {
+					return i;
+				}
+			}
+			return -1;
+		};
+	}
 
 	var eventable = function(obj) {
 		var events = {};
@@ -59,8 +78,7 @@
 			toast.init();
 
 			toast.on('hide', function() {
-				this.destroy();
-
+				instance.removeToast(this);
 				instance.showNextToastInWaiting();
 			});
 
@@ -74,6 +92,15 @@
 
 			shownQueue.push(toast);
 		}
+
+		instance.removeToast = function(toast) {
+			toast.destroy();
+
+			var index = shownQueue.indexOf(toast);
+			if (index !== -1) {
+				shownQueue.splice(index, 1);
+			}
+		};
 
 		instance.stopToasts = function() {
 			$.each(shownQueue, function() {
@@ -122,31 +149,51 @@
 		return instance;
 	};
 
-	toaster.toast = function($el, options) {
+	toaster.toast = function(options) {
+		options = $.extend({
+			toast: null,
+			content: '',
+			duration: 4000,
+			transitionDuraion: 750,
+			fallIntoPositionDuration: 300,
+			effectDuration: 'fast',
+			closeBtn: 'x',
+			closeBtnClass: 'toaster-toast-close-button',
+			contentClass: 'toaster-toast-message'
+		}, options);
+
+		var toast = options.toast ||
+'<div class="toaster-toast">' +
+'	<a class="' + options.closeBtnClass + '" href="#">' + options.closeBtn + '</a>' +
+'	<div class="' + options.contentClass + '">' +
+'	</div>' +
+'</div>'
+;
 		var
 			instance = eventable(),
 			timer,
-			$closeBtn
+			$closeBtn,
+			$el = $(toast),
+			$content = $el.find('.' + options.contentClass)
 			;
 
-		options = $.extend({
-			duration: 3000,
-			effectDuration: 'fast',
-			closeBtn: '.toaster-toast-close-button'
-		}, options);
+		$content.html(options.content);
 
 		instance.options = options;
 
 		instance.init = function() {
-			$closeBtn = $el.find(options.closeBtn);
+			$closeBtn = $el.find('.' + options.closeBtnClass);
 
 			/**
 			 * Bind events
 			 */
-			$closeBtn.on('click', function(e) {
-				instance.hide();
-				return false;
-			});
+
+			if ($closeBtn.length) {
+				$closeBtn.on('click', function(e) {
+					instance.hide();
+					return false;
+				});
+			}
 
 			$el.on('mouseover', function() {
 				instance.trigger('mouseover');
@@ -156,16 +203,31 @@
 				instance.trigger('mouseout');
 			});
 
-			this.show();
+			instance.show();
+			instance.play();
+		};
+
+		instance.setContent = function(content) {
+			$content.html(options.content);
+			return this;
 		};
 
 		instance.show = function() {
-			$el.addClass('show');
+			$el.animate({
+				opacity: 1,
+				top: "0px"
+			}, this.options.transitionDuraion);
 		};
 
 		instance.hide = function() {
-			$el.removeClass('show');
-			this.trigger('hide');
+			$el.animate({
+				opacity: 0,
+				top: "20px"
+			}, this.options.transitionDuraion).animate({
+				height: "0px"
+			}, this.options.fallIntoPositionDuration, function() {
+				instance.trigger('hide');
+			});
 		};
 
 		instance.stop = function() {
@@ -186,7 +248,10 @@
 		};
 
 		instance.destroy = function() {
-			$closeBtn.off();
+			if ($closeBtn) {
+				$closeBtn.off();
+			}
+
 			$el.off();
 			$el.remove();
 		};
@@ -197,4 +262,4 @@
 	};
 
 	window.toaster = toaster;
-}(jQuery, window));
+}(jQuery, window, document));

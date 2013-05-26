@@ -1,55 +1,80 @@
 describe("A toast", function() {
-	var toast, $toast;
+	var toast;
+
+	function closeBtn(toast) {
+		return toast.$el.find('.' + toast.options.closeBtnClass);
+	}
+
+	function contentBtn(toast) {
+		return toast.$efind('.' + toast.options.contentClass);
+	}
 
 	beforeEach(function() {
-		loadToastDom();
-		$toast =  $(".toaster-toast");
-		toast = toaster.toast($toast);
+		toast = toaster.toast();
 	});
 
 	afterEach(function() {
-		removeToastDom();
 		toast = null;
 	});
 
 	it("should return a toast object", function() {
 		expect(toast).not.toBeNull();
 		expect(toast.options).not.toBeNull();
-		expect(toast.$el).toEqual($toast);
+		expect(closeBtn(toast).length).toEqual(1);
 	});
 
-	it("should run bind the correct event and run the correct method on initializing" , function() {
+	it("should bind the correct events and run the correct method on initializing" , function() {
 		spyOn(toast, 'hide');
 		spyOn(toast, 'show');
 		spyOn(toast, 'trigger');
+
 		toast.init();
 
 		expect(toast.show).toHaveBeenCalled();
 
-		$toast.find(toast.options.closeBtn).click();
+		closeBtn(toast).click();
 		expect(toast.hide).toHaveBeenCalled();
 
-		$toast.trigger('mouseover');
+		toast.$el.trigger('mouseover');
 		expect(toast.trigger).toHaveBeenCalledWith('mouseover');
 
-		$toast.trigger('mouseout');
+		toast.$el.trigger('mouseout');
 		expect(toast.trigger).toHaveBeenCalledWith('mouseout');
 	});
 
 	it("should add show class to $el", function() {
+		toast = toaster.toast({
+			transitionDuraion: 50,
+			fallIntoPositionDuration: 10
+		});
+
+		spyOn(toast, 'trigger');
 		toast.show();
-		expect(toast.$el.hasClass('show')).toEqual(true);
+		waitsFor(function() {
+			return toast.$el.css('opacity') == 1;
+		}, 'should trigger show', toast.options.transitionDuraion + toast.options.fallIntoPositionDuration);
+
 	});
 
 	it("should remove show class to $el", function() {
-		toast.$el.addClass('show');
+		toast = toaster.toast({
+			transitionDuraion: 50,
+			fallIntoPositionDuration: 10
+		});
+
+		spyOn(toast, 'trigger');
+		toast.$el.css('opacity', 1);
 		toast.hide();
-		expect(toast.$el.hasClass('show')).toEqual(false);
+		waitsFor(function() {
+			return toast.$el.css('opacity') == 0;
+		}, 'should trigger hide', toast.options.transitionDuraion + toast.options.fallIntoPositionDuration);
 	});
 
 	it("should play timer and execute callback", function() {
-		toast = toaster.toast($toast, {
-			duration: 50
+		toast = toaster.toast({
+			duration: 50,
+			transitionDuraion: 50,
+			fallIntoPositionDuration: 10
 		});
 
 		toast.init();
@@ -59,11 +84,17 @@ describe("A toast", function() {
 		});
 
 		waitsFor(function() {
-			return !$toast.hasClass('show');
-		}, 'should execute callback', toast.options.duration);
+			return !closeBtn(toast).hasClass('toast--show');
+		}, 'should execute callback', toast.options.duration + toast.options.transitionDuraion + toast.options.fallIntoPositionDuration);
 	});
 
 	it("should play timer not execute callback before the timer finish", function() {
+		toast = toaster.toast({
+			duration: 50,
+			transitionDuraion: 50,
+			fallIntoPositionDuration: 10
+		});
+
 		toast.init();
 
 		runs(function() {
@@ -71,12 +102,12 @@ describe("A toast", function() {
 		});
 
 		waitsFor(function() {
-			return $toast.hasClass('show');
-		}, 'should execute callback', toast.options.duration - 500);
+			return toast.$el.css('opacity') == 1;
+		}, 'should execute callback', toast.options.duration + toast.options.transitionDuraion + toast.options.fallIntoPositionDuration - 500);
 	});
 
 	it("should stop timer", function() {
-		toast = toaster.toast($toast, {
+		toast = toaster.toast({
 			duration: 50
 		});
 
@@ -89,26 +120,27 @@ describe("A toast", function() {
 		});
 
 		waitsFor(function() {
-			return $toast.hasClass('show');
+			return toast.$el.css('opacity') == 1;
 		}, 'should not execute callback', toast.options.duration);
 	});
 
 	it("should destroy and unbind all events", function() {
 		toast.init();
+		spyOn(toast.$el, 'remove');
 		toast.destroy();
 
 		spyOn(toast, 'hide');
 		spyOn(toast, 'trigger');
 
-		$toast.find(toast.options.closeBtn).click();
+		closeBtn(toast).click();
 		expect(toast.hide).not.toHaveBeenCalled();
 
-		$toast.trigger('mouseover');
+		toast.$el.trigger('mouseover');
 		expect(toast.trigger).not.toHaveBeenCalled();
 
-		$toast.trigger('mouseout');
+		toast.$el.trigger('mouseout');
 		expect(toast.trigger).not.toHaveBeenCalled();
 
-		expect($(".toaster-toast").length).toEqual(0);
+		expect(toast.$el.remove).toHaveBeenCalled();
 	});
 });
