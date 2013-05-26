@@ -14,7 +14,6 @@ describe("The toaster", function() {
 		expect(toaster).not.toBeNull();
 		expect(toaster.options).not.toBeNull();
 		expect(toaster.options.$el).not.toBeNull();
-		expect($('.' + toaster.options.cls).length).toEqual(1);
 	});
 
 	it("should destroy the toaster", function() {
