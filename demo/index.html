@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Toaster.js demo</title>
+		<link rel="stylesheet" type="text/css" href="bootstrap.min.css">
+		<link rel="stylesheet" type="text/css" href="../src/toaster.css">
+		<script type="text/javascript" src="../components/jquery/jquery.min.js"></script>
+		<script type="text/javascript" src="../src/toaster.min.js"></script>
+		<script type="text/javascript">
+		(function($, window) {
+			$(function() {
+				$('.prettyprint').each(function() {
+					var $code = $(this);
+					var html = $code.html();
+
+					$code.text(html);
+				});
+
+				var toaster = window.toaster();
+
+				$('.demo-group').each(function() {
+					var $demo = $(this);
+
+					$demo.find('.popup-toast').click(function() {
+						var toast = window.toaster.toast({
+							content: $demo.find('.toast-content-input').val()
+						});
+						toaster.push(toast);
+					});
+				});
+			});
+		}(jQuery, window));
+		</script>
+		<style type="text/css">
+		.demo-group {
+			margin-bottom: 40px;
+		}
+
+		.toast-content-input {
+			width: 600px;
+			height: 100px;
+			margin-right: 10px;
+			display: block;
+			margin-top: 10px;
+		}
+
+		.prettyprint {
+			margin-top: 10px;
+		}
+
+		.toast-image {
+			padding: 5px 5px 0 5px;
+			float: left;
+		}
+
+		.toast-message {
+			font-size: 1em;
+		}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<h1>Toaster.js demo</h1>
+			<p>Basic usage</p>
+			<pre class="prettyprint">
+var toaster = window.toaster();
+
+var toast = window.toaster.toast({
+content: $('.toast-content-input').val()
+});
+toaster.push(toast);
+			</pre>
+			<h2>Try it out</h2>
+			<div class="demo-group">
+				<h3>Toast with your text</h3>
+				<button class="btn popup-toast btn-success">Popup toast</button>
+				<textarea class="toast-content-input">Bacon ipsum dolor sit amet turducken shankle capicola, rump salami prosciutto pork belly pork hamburger. Flank ham t-bone, beef ribs ball tip biltong meatloaf venison meatball brisket andouille shank. Ground round shoulder swine turkey. </textarea>
+			</div>
+			<div class="demo-group">
+				<h3>Toast with your html</h3>
+				Just specify your own css for custom styles
+				<button class="btn popup-toast btn-success">Popup toast</button>
+				<textarea class="toast-content-input">
+<img width="50" height="50" class="toast-image" src="http://placekitten.com/g/50/50" /><p class="toast-message">Bacon ipsum dolor sit amet turducken shankle capicola, rump salami prosciutto pork belly pork hamburger.</p></textarea>
+			</div>
+		</div>
+	</body>
+</html>

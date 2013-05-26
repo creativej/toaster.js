@@ -1,0 +1,25 @@
+.toaster-group {
+	position: fixed;
+	text-align: right;
+	bottom: 0px;
+	right: 0px;
+}
+
+.toaster-toast {
+	width: 250px;
+	border: 1px #ccc solid;
+	border-radius: 3px;
+	margin: 10px;
+	right: 0px;
+	position: relative;
+	padding: 20px 10px 10px;
+	background-color: #fff;
+	opacity: 0;
+	top: 20px;
+}
+
+.toaster-toast-close-button {
+	position: absolute;
+	right: 5px;
+	top: 0px;
+}
