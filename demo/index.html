@@ -8,6 +8,8 @@
 		<script type="text/javascript" src="../src/toaster.min.js"></script>
 		<script type="text/javascript">
 		(function($, window) {
+			$.fx.interval = 1000 / 30;
+
 			$(function() {
 				$('.prettyprint').each(function() {
 					var $code = $(this);
@@ -28,6 +30,36 @@
 						toaster.push(toast);
 					});
 				});
+
+				var lbcToaster = window.toaster({
+					corner: 'bottom-left-corner'
+				});
+
+				var tlcToaster = window.toaster({
+					corner: 'top-left-corner'
+				});
+
+				var trcToaster = window.toaster({
+					corner: 'top-right-corner'
+				});
+
+				$('.popup-toast-blc').click(function() {
+					lbcToaster.push(window.toaster.toast({
+						content: 'This is a bottom left corner toaster'
+					}));
+				});
+
+				$('.popup-toast-trc').click(function() {
+					trcToaster.push(window.toaster.toast({
+						content: 'This is a top right corner toaster'
+					}));
+				});
+
+				$('.popup-toast-tlc').click(function() {
+					tlcToaster.push(window.toaster.toast({
+						content: 'This is a top left corner toaster'
+					}));
+				});
 			});
 		}(jQuery, window));
 		</script>
@@ -37,10 +69,9 @@
 		}
 
 		.toast-content-input {
-			width: 600px;
+			width: 780px;
 			height: 100px;
 			margin-right: 10px;
-			display: block;
 			margin-top: 10px;
 		}
 
@@ -48,20 +79,23 @@
 			margin-top: 10px;
 		}
 
+		.popup-toast {
+			vertical-align: top;
+			margin-top: 10px;
+			margin-right: 10px;
+		}
+
 		.toast-image {
 			padding: 5px 5px 0 5px;
 			float: left;
 		}
-
-		.toast-message {
-			font-size: 1em;
-		}
 		</style>
 	</head>
 	<body>
+		<a href="https://github.com/creativej/toaster.js"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"></a>
 		<div class="container">
 			<h1>Toaster.js demo</h1>
-			<p>Basic usage</p>
+			<h3>Basic usage</h3>
 			<pre class="prettyprint">
 var toaster = window.toaster();
 
@@ -70,18 +104,41 @@ content: $('.toast-content-input').val()
 });
 toaster.push(toast);
 			</pre>
-			<h2>Try it out</h2>
 			<div class="demo-group">
-				<h3>Toast with your text</h3>
-				<button class="btn popup-toast btn-success">Popup toast</button>
-				<textarea class="toast-content-input">Bacon ipsum dolor sit amet turducken shankle capicola, rump salami prosciutto pork belly pork hamburger. Flank ham t-bone, beef ribs ball tip biltong meatloaf venison meatball brisket andouille shank. Ground round shoulder swine turkey. </textarea>
+				<h3>Toast your text</h3>
+				<div>
+					<textarea class="toast-content-input">Bacon ipsum dolor sit amet turducken shankle capicola, rump salami prosciutto pork belly pork hamburger. Flank ham t-bone, beef ribs ball tip biltong meatloaf venison meatball brisket andouille shank. Ground round shoulder swine turkey. </textarea>
+					<button class="btn popup-toast btn-success">Toast it!</button>
+				</div>
 			</div>
 			<div class="demo-group">
-				<h3>Toast with your html</h3>
+				<h3>Toast your html</h3>
+				<p>
 				Just specify your own css for custom styles
-				<button class="btn popup-toast btn-success">Popup toast</button>
-				<textarea class="toast-content-input">
+				</p>
+				<pre class="prettyprint">
+.toast-image {
+	padding: 5px 5px 0 5px;
+	float: left;
+}</pre>
+				<div>
+					<textarea class="toast-content-input">
 <img width="50" height="50" class="toast-image" src="http://placekitten.com/g/50/50" /><p class="toast-message">Bacon ipsum dolor sit amet turducken shankle capicola, rump salami prosciutto pork belly pork hamburger.</p></textarea>
+					<button class="btn popup-toast btn-success">Toast it!</button>
+				</div>
+			</div>
+			<div class="demo-group">
+				<h3>Toast can popup in all four corners</h3>
+				<pre class="prettyprint">
+var toaster = window.toaster({
+	corner: 'bottom-left-corner' // Or 'top-left-corner', 'top-right-corner'
+});
+</pre>
+				<div>
+					<button class="btn popup-toast-trc btn-success">Toast it top right corner!</button>
+					<button class="btn popup-toast-tlc btn-success">Toast it top left corner!</button>
+					<button class="btn popup-toast-blc btn-success">Toast it bottom left corner!</button>
+				</div>
 			</div>
 		</div>
 	</body>

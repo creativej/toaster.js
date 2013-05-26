@@ -56,25 +56,42 @@
 		var
 			instance = eventable(),
 			shownQueue = [],
-			waitingQueue = []
+			waitingQueue = [],
+			corners = {
+				bottomRight: 'bottom-right-corner',
+				bottomLeft: 'bottom-left-corner',
+				topRight: 'top-right-corner',
+				topLeft: 'top-left-corner'
+			}
 			;
 
 		options = $.extend({
 			hover: false,
 			maxToastShow: 5,
-			cls: 'toaster-group'
+			nextToastDelay: 500,
+			corner: corners.bottomRight
 		}, options);
 
 		if (!options.$el) {
 			options.$el = $('<div />');
-			options.$el.addClass(options.cls);
+			options.$el.addClass('toaster-group');
+			options.$el.addClass('toaster-group--' + options.corner);
 			$('body').append(options.$el);
 		}
 
 		instance.options = options;
 
 		function showToast(toast) {
-			options.$el.prepend(toast.$el);
+			if (
+				options.corner === corners.bottomRight ||
+				options.corner === corners.bottomLeft
+			) {
+				options.$el.prepend(toast.$el);
+			} else {
+				toast.options.transitionTop = '-20px';
+				options.$el.append(toast.$el);
+			}
+
 			toast.init();
 
 			toast.on('hide', function() {
@@ -109,8 +126,8 @@
 		};
 
 		instance.playToasts = function() {
-			$.each(shownQueue, function() {
-				this.play();
+			$.each(shownQueue, function(index) {
+				this.play(instance.options.nextToastDelay * index);
 			});
 		};
 
@@ -155,11 +172,12 @@
 			content: '',
 			duration: 4000,
 			transitionDuraion: 750,
-			fallIntoPositionDuration: 300,
+			fallIntoPositionDuration: 400,
 			effectDuration: 'fast',
 			closeBtn: 'x',
+			transitionTop: '20px',
 			closeBtnClass: 'toaster-toast-close-button',
-			contentClass: 'toaster-toast-message'
+			contentClass: 'toaster-toast-content'
 		}, options);
 
 		var toast = options.toast ||
@@ -203,6 +221,9 @@
 				instance.trigger('mouseout');
 			});
 
+			// This is needed to have nice height animation
+			$el.css('height', $el.height());
+
 			instance.show();
 			instance.play();
 		};
@@ -216,17 +237,34 @@
 			$el.animate({
 				opacity: 1,
 				top: "0px"
-			}, this.options.transitionDuraion);
+			}, {
+				duration: this.options.transitionDuraion,
+				queue: true
+			});
 		};
 
 		instance.hide = function() {
+			var fadeOutPromise = $.Deferred();
+
 			$el.animate({
 				opacity: 0,
-				top: "20px"
-			}, this.options.transitionDuraion).animate({
-				height: "0px"
-			}, this.options.fallIntoPositionDuration, function() {
-				instance.trigger('hide');
+				top: this.options.transitionTop
+			}, {
+				duration: this.options.transitionDuraion,
+				complete: function() {
+					fadeOutPromise.resolve();
+				}
+			});
+
+			fadeOutPromise.done(function() {
+				$el.animate({
+					height: 0
+				}, {
+					duration: instance.options.fallIntoPositionDuration,
+					complete: function() {
+						instance.trigger('hide');
+					}
+				});
 			});
 		};
 
@@ -238,12 +276,14 @@
 			return this;
 		};
 
-		instance.play = function() {
+		instance.play = function(delay) {
 			this.stop();
+
+			delay = delay || 0;
 
 			timer = window.setTimeout(function() {
 				instance.hide();
-			}, options.duration);
+			}, options.duration + delay);
 			return this;
 		};
 

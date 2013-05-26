@@ -1,6 +1,24 @@
 .toaster-group {
 	position: fixed;
-	text-align: right;
+	z-index: 20;
+}
+
+.toaster-group--top-right-corner {
+	top: 0px;
+	right: 0px;
+}
+
+.toaster-group--top-left-corner {
+	top: 0px;
+	left: 0px;
+}
+
+.toaster-group--bottom-left-corner {
+	bottom: 0px;
+	left: 0px;
+}
+
+.toaster-group--bottom-right-corner {
 	bottom: 0px;
 	right: 0px;
 }
