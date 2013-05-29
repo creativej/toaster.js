@@ -15,8 +15,5 @@ Basic Usage
 ```javascript
 var toaster = window.toaster();
 
-var toast = window.toaster.toast({
-  content: 'Your content'
-});
-toaster.push(toast);
+toaster.newToast('Your content');
 ```

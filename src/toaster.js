@@ -52,121 +52,7 @@
 		return obj;
 	};
 
-	var toaster = function(options) {
-		var
-			instance = eventable(),
-			shownQueue = [],
-			waitingQueue = [],
-			corners = {
-				bottomRight: 'bottom-right-corner',
-				bottomLeft: 'bottom-left-corner',
-				topRight: 'top-right-corner',
-				topLeft: 'top-left-corner'
-			}
-			;
-
-		options = $.extend({
-			hover: false,
-			maxToastShow: 5,
-			nextToastDelay: 500,
-			corner: corners.bottomRight
-		}, options);
-
-		if (!options.$el) {
-			options.$el = $('<div />');
-			options.$el.addClass('toaster-group');
-			options.$el.addClass('toaster-group--' + options.corner);
-			$('body').append(options.$el);
-		}
-
-		instance.options = options;
-
-		function showToast(toast) {
-			if (
-				options.corner === corners.bottomRight ||
-				options.corner === corners.bottomLeft
-			) {
-				options.$el.prepend(toast.$el);
-			} else {
-				toast.options.transitionTop = '-20px';
-				options.$el.append(toast.$el);
-			}
-
-			toast.init();
-
-			toast.on('hide', function() {
-				instance.removeToast(this);
-				instance.showNextToastInWaiting();
-			});
-
-			toast.on('mouseover', function() {
-				instance.stopToasts();
-			});
-
-			toast.on('mouseout', function() {
-				instance.playToasts();
-			});
-
-			shownQueue.push(toast);
-		}
-
-		instance.removeToast = function(toast) {
-			toast.destroy();
-
-			var index = shownQueue.indexOf(toast);
-			if (index !== -1) {
-				shownQueue.splice(index, 1);
-			}
-		};
-
-		instance.stopToasts = function() {
-			$.each(shownQueue, function() {
-				this.stop();
-			});
-		};
-
-		instance.playToasts = function() {
-			$.each(shownQueue, function(index) {
-				this.play(instance.options.nextToastDelay * index);
-			});
-		};
-
-		instance.showNextToastInWaiting = function() {
-			var toast = waitingQueue.shift();
-
-			if (toast) {
-				showToast(toast);
-			}
-		};
-
-		instance.push = function(toast) {
-			if (shownQueue.length < options.maxToastShow) {
-				showToast(toast);
-			} else {
-				waitingQueue.push(toast);
-			}
-		};
-
-		instance.shownQueueLength = function() {
-			return shownQueue.length;
-		};
-
-		instance.waitingQueueLength = function() {
-			return waitingQueue.length;
-		};
-
-		instance.hasToast = function(toast) {
-			return Boolean(options.$el.find(toast.$el).length);
-		};
-
-		instance.destroy = function() {
-			options.$el.remove();
-		};
-
-		return instance;
-	};
-
-	toaster.toast = function(options) {
+	var toast = function(options) {
 		options = $.extend({
 			toast: null,
 			content: '',
@@ -300,6 +186,128 @@
 
 		return instance;
 	};
+
+	var toaster = function(options) {
+		var
+			instance = eventable(),
+			shownQueue = [],
+			waitingQueue = [],
+			corners = {
+				bottomRight: 'bottom-right-corner',
+				bottomLeft: 'bottom-left-corner',
+				topRight: 'top-right-corner',
+				topLeft: 'top-left-corner'
+			}
+			;
+
+		options = $.extend({
+			hover: false,
+			maxToastShow: 5,
+			nextToastDelay: 500,
+			corner: corners.bottomRight
+		}, options);
+
+		if (!options.$el) {
+			options.$el = $('<div />');
+			options.$el.addClass('toaster-group');
+			options.$el.addClass('toaster-group--' + options.corner);
+			$('body').append(options.$el);
+		}
+
+		instance.options = options;
+
+		function showToast(toast) {
+			if (
+				options.corner === corners.bottomRight ||
+				options.corner === corners.bottomLeft
+			) {
+				options.$el.prepend(toast.$el);
+			} else {
+				toast.options.transitionTop = '-20px';
+				options.$el.append(toast.$el);
+			}
+
+			toast.init();
+
+			toast.on('hide', function() {
+				instance.removeToast(this);
+				instance.showNextToastInWaiting();
+			});
+
+			toast.on('mouseover', function() {
+				instance.stopToasts();
+			});
+
+			toast.on('mouseout', function() {
+				instance.playToasts();
+			});
+
+			shownQueue.push(toast);
+		}
+
+		instance.removeToast = function(toast) {
+			toast.destroy();
+
+			var index = shownQueue.indexOf(toast);
+			if (index !== -1) {
+				shownQueue.splice(index, 1);
+			}
+		};
+
+		instance.stopToasts = function() {
+			$.each(shownQueue, function() {
+				this.stop();
+			});
+		};
+
+		instance.playToasts = function() {
+			$.each(shownQueue, function(index) {
+				this.play(instance.options.nextToastDelay * index);
+			});
+		};
+
+		instance.showNextToastInWaiting = function() {
+			var toast = waitingQueue.shift();
+
+			if (toast) {
+				showToast(toast);
+			}
+		};
+
+		instance.newToast = function(content) {
+			var newToast = toast({ content: content });
+			this.push(newToast);
+			return newToast;
+		};
+
+		instance.push = function(toast) {
+			if (shownQueue.length < options.maxToastShow) {
+				showToast(toast);
+			} else {
+				waitingQueue.push(toast);
+			}
+		};
+
+		instance.shownQueueLength = function() {
+			return shownQueue.length;
+		};
+
+		instance.waitingQueueLength = function() {
+			return waitingQueue.length;
+		};
+
+		instance.hasToast = function(toast) {
+			return Boolean(options.$el.find(toast.$el).length);
+		};
+
+		instance.destroy = function() {
+			options.$el.remove();
+		};
+
+		return instance;
+	};
+
+	toaster.toast = toast;
 
 	window.toaster = toaster;
 }(jQuery, window, document));

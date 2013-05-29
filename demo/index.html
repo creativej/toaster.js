@@ -24,10 +24,7 @@
 					var $demo = $(this);
 
 					$demo.find('.popup-toast').click(function() {
-						var toast = window.toaster.toast({
-							content: $demo.find('.toast-content-input').val()
-						});
-						toaster.push(toast);
+						toaster.newToast($demo.find('.toast-content-input').val());
 					});
 				});
 
@@ -44,21 +41,15 @@
 				});
 
 				$('.popup-toast-blc').click(function() {
-					lbcToaster.push(window.toaster.toast({
-						content: 'This is a bottom left corner toaster'
-					}));
+					lbcToaster.newToast('This is a bottom left corner toaster');
 				});
 
 				$('.popup-toast-trc').click(function() {
-					trcToaster.push(window.toaster.toast({
-						content: 'This is a top right corner toaster'
-					}));
+					trcToaster.newToast('This is a top right corner toaster');
 				});
 
 				$('.popup-toast-tlc').click(function() {
-					tlcToaster.push(window.toaster.toast({
-						content: 'This is a top left corner toaster'
-					}));
+					tlcToaster.newToast('This is a top left corner toaster');
 				});
 			});
 		}(jQuery, window));

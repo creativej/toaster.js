@@ -21,6 +21,28 @@ describe("The toaster", function() {
 		expect($('.' + toaster.options.cls).length).toEqual(0);
 	});
 
+	it("should create and insert new toast into the toaster", function() {
+		expect(toaster.shownQueueLength()).toEqual(0);
+		var toast = toaster.newToast({ content: '' });
+		expect(toaster.shownQueueLength()).toEqual(1);
+
+		spyOn(toaster, 'stopToasts');
+		toast.trigger('mouseover');
+		expect(toaster.stopToasts).toHaveBeenCalled();
+
+		spyOn(toaster, 'playToasts');
+		toast.trigger('mouseout');
+		expect(toaster.playToasts).toHaveBeenCalled();
+
+		expect(toaster.hasToast(toast)).toEqual(true);
+
+		spyOn(toaster, 'showNextToastInWaiting');
+		spyOn(toaster, 'removeToast');
+		toast.trigger('hide');
+		expect(toaster.showNextToastInWaiting).toHaveBeenCalled();
+		expect(toaster.removeToast).toHaveBeenCalledWith(toast);
+	});
+
 	it("should insert toast into the toaster", function() {
 		var toast = window.toaster.toast();
 
