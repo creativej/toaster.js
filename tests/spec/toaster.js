@@ -1,5 +1,5 @@
 describe("The toaster", function() {
-	var toaster;
+	var toaster, delay = 50;
 
 	beforeEach(function() {
 		toaster = window.toaster();
@@ -22,49 +22,102 @@ describe("The toaster", function() {
 	});
 
 	it("should create and insert new toast into the toaster", function() {
-		expect(toaster.shownQueueLength()).toEqual(0);
+		spyOn(toaster, 'push');
 		var toast = toaster.newToast({ content: '' });
-		expect(toaster.shownQueueLength()).toEqual(1);
-
-		spyOn(toaster, 'stopToasts');
-		toast.trigger('mouseover');
-		expect(toaster.stopToasts).toHaveBeenCalled();
-
-		spyOn(toaster, 'playToasts');
-		toast.trigger('mouseout');
-		expect(toaster.playToasts).toHaveBeenCalled();
-
-		expect(toaster.hasToast(toast)).toEqual(true);
-
-		spyOn(toaster, 'showNextToastInWaiting');
-		spyOn(toaster, 'removeToast');
-		toast.trigger('hide');
-		expect(toaster.showNextToastInWaiting).toHaveBeenCalled();
-		expect(toaster.removeToast).toHaveBeenCalledWith(toast);
+		expect(toaster.push).toHaveBeenCalled();
 	});
 
 	it("should insert toast into the toaster", function() {
 		var toast = window.toaster.toast();
 
+		spyOn(toast, 'init');
+
 		expect(toaster.shownQueueLength()).toEqual(0);
 		toaster.push(toast);
 		expect(toaster.shownQueueLength()).toEqual(1);
+		expect(toast.init).toHaveBeenCalled();
 
-		spyOn(toaster, 'stopToasts');
-		toast.trigger('mouseover');
-		expect(toaster.stopToasts).toHaveBeenCalled();
+		spyOn(toaster, 'stop');
+		toaster.$el.trigger('mouseover');
+		expect(toaster.stop).toHaveBeenCalledWith();
 
-		spyOn(toaster, 'playToasts');
-		toast.trigger('mouseout');
-		expect(toaster.playToasts).toHaveBeenCalled();
+		spyOn(toaster, 'play');
+		toaster.$el.trigger('mouseout');
+		expect(toaster.play).toHaveBeenCalledWith();
 
 		expect(toaster.hasToast(toast)).toEqual(true);
 
-		spyOn(toaster, 'showNextToastInWaiting');
 		spyOn(toaster, 'removeToast');
 		toast.trigger('hide');
-		expect(toaster.showNextToastInWaiting).toHaveBeenCalled();
 		expect(toaster.removeToast).toHaveBeenCalledWith(toast);
+	});
+
+	it("should play timer and execute callback", function() {
+		spyOn(toaster, 'hideAllVisibleToasts');
+
+		runs(function() {
+			toaster.play();
+		});
+
+		waits(delay);
+
+		runs(function() {
+			expect(toaster.hideAllVisibleToasts).toHaveBeenCalled();
+		});
+	});
+
+	it("should play timer not execute callback before the timer finish", function() {
+		spyOn(toaster, 'hideAllVisibleToasts');
+
+		runs(function() {
+			toaster.play(delay);
+		});
+
+		waits(delay - 10);
+
+		runs(function() {
+			expect(toaster.hideAllVisibleToasts).not.toHaveBeenCalled();
+		});
+	});
+
+	it("should stop timer", function() {
+		spyOn(toaster, 'hideAllVisibleToasts');
+
+		runs(function() {
+			toaster.play(delay).stop();
+		});
+
+		waits(delay);
+
+		runs(function() {
+			expect(toaster.hideAllVisibleToasts).not.toHaveBeenCalled();
+		});
+	});
+
+
+	it("should continue with the remaining time", function() {
+		spyOn(toaster, 'hideAllVisibleToasts');
+
+		runs(function() {
+			toaster.play(50);
+		});
+
+		waits(delay/2);
+		runs(function() {
+			toaster.stop();
+		});
+		waits(delay/2);
+		runs(function() {
+			expect(toaster.hideAllVisibleToasts).not.toHaveBeenCalled();
+		});
+
+		runs(function() {
+			toaster.play();
+		});
+		waits(delay/2 + 1);
+		runs(function() {
+			expect(toaster.hideAllVisibleToasts).toHaveBeenCalled();
+		});
 	});
 
 	it("should able to push multiple toast into queue", function() {
@@ -92,52 +145,76 @@ describe("The toaster", function() {
 		expect(toaster.waitingQueueLength()).toEqual(2);
 	});
 
-	it("should show the next toast in waiting", function() {
+	it("should be able to forcibly push toast into shown queue even if the max is reached", function() {
 		var toaster = window.toaster({
-			maxToastShow: 0
+			maxToastShow: 1
 		});
 
 		var toast = window.toaster.toast();
 
 		toaster.push(toast);
+		toaster.push(toast, true);
+		toaster.push(toast, true);
+
+		expect(toaster.shownQueueLength()).toEqual(3);
+	});
+
+	it("should push toast into waiting queue when there are items in the waiting queue", function() {
+		var toast = window.toaster.toast();
+
+		toaster.push(toast);
+
+		spyOn(toaster, 'waitingQueueLength').andReturn(1);
+
+		toaster.push(toast);
+		toaster.push(toast);
+
+		expect(toaster.shownQueueLength()).toEqual(1);
+	});
+
+	it("should show the next batch of toasts in waiting", function() {
+		var toaster = window.toaster({
+			maxToastShow: 0,
+			delay: 50
+		});
+
+		var toast = window.toaster.toast();
+
+		toaster.push(toast);
+		toaster.push(toast);
+		toaster.push(toast);
 
 		expect(toaster.shownQueueLength()).toEqual(0);
-		expect(toaster.waitingQueueLength()).toEqual(1);
-		toaster.showNextToastInWaiting();
-		expect(toaster.shownQueueLength()).toEqual(1);
-		expect(toaster.waitingQueueLength()).toEqual(0);
+		expect(toaster.waitingQueueLength()).toEqual(3);
+
+		toaster.options.maxToastShow = 2;
+
+		runs(function() {
+			toaster.showToastsInWaiting();
+		});
+
+		waits(50);
+
+		runs(function() {
+			expect(toaster.shownQueueLength()).toEqual(2);
+			expect(toaster.waitingQueueLength()).toEqual(1);
+		});
 	});
 
-	it("should stop all toasts in the shown queue", function() {
+	it("should hide all toasts in the shown queue", function() {
 		var toast1 = window.toaster.toast();
 		var toast2 = window.toaster.toast();
 
-		spyOn(toast1, 'stop');
-		spyOn(toast2, 'stop');
+		spyOn(toast1, 'hide');
+		spyOn(toast2, 'hide');
 
 		toaster.push(toast1);
 		toaster.push(toast2);
 
-		toaster.stopToasts();
+		toaster.hideAllVisibleToasts();
 
-		expect(toast1.stop).toHaveBeenCalled();
-		expect(toast2.stop).toHaveBeenCalled();
-	});
-
-	it("should play all toasts in the shown queue", function() {
-		var toast1 = window.toaster.toast();
-		var toast2 = window.toaster.toast();
-
-		spyOn(toast1, 'play');
-		spyOn(toast2, 'play');
-
-		toaster.push(toast1);
-		toaster.push(toast2);
-
-		toaster.playToasts();
-
-		expect(toast1.play).toHaveBeenCalled();
-		expect(toast2.play).toHaveBeenCalled();
+		expect(toast1.hide).toHaveBeenCalled();
+		expect(toast2.hide).toHaveBeenCalled();
 	});
 
 	it("should remove toast properly", function() {

@@ -56,9 +56,7 @@
 		options = $.extend({
 			toast: null,
 			content: '',
-			duration: 4000,
-			transitionDuraion: 750,
-			fallIntoPositionDuration: 400,
+			transitionDuraion: 500,
 			effectDuration: 'fast',
 			closeBtn: 'x',
 			transitionTop: '20px',
@@ -75,7 +73,6 @@
 ;
 		var
 			instance = eventable(),
-			timer,
 			$closeBtn,
 			$el = $(toast),
 			$content = $el.find('.' + options.contentClass)
@@ -99,19 +96,10 @@
 				});
 			}
 
-			$el.on('mouseover', function() {
-				instance.trigger('mouseover');
-			});
-
-			$el.on('mouseout', function() {
-				instance.trigger('mouseout');
-			});
-
 			// This is needed to have nice height animation
 			$el.css('height', $el.height());
 
 			instance.show();
-			instance.play();
 		};
 
 		instance.setContent = function(content) {
@@ -130,47 +118,22 @@
 		};
 
 		instance.hide = function() {
-			var fadeOutPromise = $.Deferred();
-
 			$el.animate({
 				opacity: 0,
 				top: this.options.transitionTop
 			}, {
 				duration: this.options.transitionDuraion,
 				complete: function() {
-					fadeOutPromise.resolve();
+					$el.animate({
+						height: 0
+					}, {
+						duration: 250,
+						complete: function() {
+							instance.trigger('hide');
+						}
+					});
 				}
 			});
-
-			fadeOutPromise.done(function() {
-				$el.animate({
-					height: 0
-				}, {
-					duration: instance.options.fallIntoPositionDuration,
-					complete: function() {
-						instance.trigger('hide');
-					}
-				});
-			});
-		};
-
-		instance.stop = function() {
-			if (timer) {
-				window.clearTimeout(timer);
-			}
-
-			return this;
-		};
-
-		instance.play = function(delay) {
-			this.stop();
-
-			delay = delay || 0;
-
-			timer = window.setTimeout(function() {
-				instance.hide();
-			}, options.duration + delay);
-			return this;
 		};
 
 		instance.destroy = function() {
@@ -180,6 +143,7 @@
 
 			$el.off();
 			$el.remove();
+			this.trigger('destroyed');
 		};
 
 		instance.$el = $el;
@@ -192,6 +156,10 @@
 			instance = eventable(),
 			shownQueue = [],
 			waitingQueue = [],
+			timer,
+			timerStart,
+			timerRemaining = 0,
+			timerDuration,
 			corners = {
 				bottomRight: 'bottom-right-corner',
 				bottomLeft: 'bottom-left-corner',
@@ -202,8 +170,10 @@
 
 		options = $.extend({
 			hover: false,
-			maxToastShow: 5,
-			nextToastDelay: 500,
+			maxToastShow: 4,
+			nextToastDelay: 0,
+			duration: 3000,
+			delay: 500,
 			corner: corners.bottomRight
 		}, options);
 
@@ -212,9 +182,14 @@
 			options.$el.addClass('toaster-group');
 			options.$el.addClass('toaster-group--' + options.corner);
 			$('body').append(options.$el);
+			instance.$el = options.$el;
 		}
 
 		instance.options = options;
+
+		function isLastShown(toast) {
+			return shownQueue.indexOf(toast) === shownQueue.length - 1;
+		}
 
 		function showToast(toast) {
 			if (
@@ -231,18 +206,25 @@
 
 			toast.on('hide', function() {
 				instance.removeToast(this);
-				instance.showNextToastInWaiting();
-			});
 
-			toast.on('mouseover', function() {
-				instance.stopToasts();
-			});
-
-			toast.on('mouseout', function() {
-				instance.playToasts();
+				if (isLastShown(this)) {
+					instance.showToastsInWaiting();
+				}
 			});
 
 			shownQueue.push(toast);
+
+			instance.reset();
+		}
+
+		instance.showToastsInWaiting = function() {
+			if (!this.waitingQueueLength()) { return; }
+
+			var newQueue = waitingQueue.splice(0, options.maxToastShow);
+
+			$.each(newQueue, function(index) {
+				window.setTimeout(instance.push, index * options.delay, this, true);
+			});
 		}
 
 		instance.removeToast = function(toast) {
@@ -254,24 +236,10 @@
 			}
 		};
 
-		instance.stopToasts = function() {
+		instance.hideAllVisibleToasts = function() {
 			$.each(shownQueue, function() {
-				this.stop();
+				this.hide();
 			});
-		};
-
-		instance.playToasts = function() {
-			$.each(shownQueue, function(index) {
-				this.play(instance.options.nextToastDelay * index);
-			});
-		};
-
-		instance.showNextToastInWaiting = function() {
-			var toast = waitingQueue.shift();
-
-			if (toast) {
-				showToast(toast);
-			}
 		};
 
 		instance.newToast = function(content) {
@@ -280,12 +248,52 @@
 			return newToast;
 		};
 
-		instance.push = function(toast) {
-			if (shownQueue.length < options.maxToastShow) {
+		instance.push = function(toast, forceShow) {
+			if ((shownQueue.length < options.maxToastShow && !instance.waitingQueueLength()) || forceShow) {
 				showToast(toast);
 			} else {
 				waitingQueue.push(toast);
 			}
+		};
+
+		instance.stop = function() {
+			if (timer) {
+				if (timerDuration) {
+ 					timerRemaining = Math.max(timerDuration - (new Date().getTime() - timerStart), 0);
+				} else {
+					timerRemaining = options.duration;
+				}
+
+				window.clearTimeout(timer);
+				timer = null;
+			}
+
+			return this;
+		};
+
+		instance.isPlaying = function() {
+			return Boolean(timer);
+		}
+
+		instance.reset = function() {
+			this.stop().play(options.duration);
+		}
+
+		instance.play = function(delay) {
+			delay = delay || 0;
+
+			timerStart = new Date().getTime();
+
+			timerDuration = timerRemaining + delay;
+
+			timer = window.setTimeout(function() {
+				instance.hideAllVisibleToasts();
+				timer = null;
+				timerDuration = 0;
+				timerRemaining = 0;
+			}, timerDuration);
+
+			return this;
 		};
 
 		instance.shownQueueLength = function() {
@@ -303,6 +311,16 @@
 		instance.destroy = function() {
 			options.$el.remove();
 		};
+
+		options.$el
+			.on('mouseover', function() {
+				instance.stop();
+			})
+			.on('mouseout', function(e) {
+				if (!$(e.relatedTarget).closest('.toaster-group').length) {
+					instance.play();
+				}
+			});
 
 		return instance;
 	};

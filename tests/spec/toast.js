@@ -26,7 +26,6 @@ describe("A toast", function() {
 	it("should bind the correct events and run the correct method on initializing" , function() {
 		spyOn(toast, 'hide');
 		spyOn(toast, 'show');
-		spyOn(toast, 'trigger');
 
 		toast.init();
 
@@ -34,12 +33,6 @@ describe("A toast", function() {
 
 		closeBtn(toast).click();
 		expect(toast.hide).toHaveBeenCalled();
-
-		toast.$el.trigger('mouseover');
-		expect(toast.trigger).toHaveBeenCalledWith('mouseover');
-
-		toast.$el.trigger('mouseout');
-		expect(toast.trigger).toHaveBeenCalledWith('mouseout');
 	});
 
 	it("should add show class to $el", function() {
@@ -68,60 +61,6 @@ describe("A toast", function() {
 		waitsFor(function() {
 			return toast.$el.css('opacity') == 0;
 		}, 'should trigger hide', toast.options.transitionDuraion + toast.options.fallIntoPositionDuration);
-	});
-
-	it("should play timer and execute callback", function() {
-		toast = toaster.toast({
-			duration: 50,
-			transitionDuraion: 50,
-			fallIntoPositionDuration: 10
-		});
-
-		toast.init();
-
-		runs(function() {
-			toast.play();
-		});
-
-		waitsFor(function() {
-			return !closeBtn(toast).hasClass('toast--show');
-		}, 'should execute callback', toast.options.duration + toast.options.transitionDuraion + toast.options.fallIntoPositionDuration);
-	});
-
-	it("should play timer not execute callback before the timer finish", function() {
-		toast = toaster.toast({
-			duration: 50,
-			transitionDuraion: 50,
-			fallIntoPositionDuration: 10
-		});
-
-		toast.init();
-
-		runs(function() {
-			toast.play();
-		});
-
-		waitsFor(function() {
-			return toast.$el.css('opacity') == 1;
-		}, 'should execute callback', toast.options.duration + toast.options.transitionDuraion + toast.options.fallIntoPositionDuration - 500);
-	});
-
-	it("should stop timer", function() {
-		toast = toaster.toast({
-			duration: 50
-		});
-
-		toast.init();
-
-		runs(function() {
-			toast
-				.play()
-				.stop();
-		});
-
-		waitsFor(function() {
-			return toast.$el.css('opacity') == 1;
-		}, 'should not execute callback', toast.options.duration);
 	});
 
 	it("should destroy and unbind all events", function() {
