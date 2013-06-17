@@ -23,7 +23,17 @@ describe("The toaster", function() {
 
 	it("should create and insert new toast into the toaster", function() {
 		spyOn(toaster, 'push');
-		var toast = toaster.newToast({ content: '' });
+		var toast = toaster.newToast('');
+		expect(toast.options.content).toEqual('');
+		expect(toaster.push).toHaveBeenCalled();
+	});
+
+	it("should create and insert new toast into toaster with custom options", function() {
+		spyOn(toaster, 'push');
+		var toast = toaster.newToast('', {
+			closeBtn: 'close'
+		});
+		expect(toast.options.closeBtn).toEqual('close');
 		expect(toaster.push).toHaveBeenCalled();
 	});
 

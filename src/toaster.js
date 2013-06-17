@@ -242,8 +242,11 @@
 			});
 		};
 
-		instance.newToast = function(content) {
-			var newToast = toast({ content: content });
+		instance.newToast = function(c, options) {
+			options = options || {};
+			options.content = c;
+
+			var newToast = toast(options);
 			this.push(newToast);
 			return newToast;
 		};
