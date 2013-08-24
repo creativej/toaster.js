@@ -3,7 +3,7 @@ Toaster.js
 
 A js library that help you show small popup notifications on web pages.
 
-Checkout the http://creativej.github.io/toaster.js/ for more detail
+Checkout the http://creativej.github.io/toaster.js/demo for more detail
 
 __Dependency:__
 jQuery
